@@ -1,136 +1,180 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="Description" content="Turn any device into a wireless microphone">
-  <title>Wireless Microphone over the internet</title>
-  <script src="dist/ipfs.min.js" defer></script>
-  <script src="dist/bundle.min.js" defer></script>
-  <script src="https://kit.fontawesome.com/90bede2e6a.js" crossorigin="anonymous" defer></script>
-  <script src="https://ackee.gaiagreen.dev/tracker.js" data-ackee-server="https://ackee.gaiagreen.dev" data-ackee-domain-id="f5df10f4-c039-420e-839f-b79cff3f0924" async></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <link rel="apple-touch-icon" sizes="180x180" href="/res/apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="32x32" href="/res/microphone-32x32.png">
-  <link rel="icon" type="image/png" sizes="16x16" href="/res/microphone-16x16.png">
-  <link rel="manifest" href="/site.webmanifest">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hello Bulma!</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
+    <script type="text/javascript" src="js/jquery-1.12.2.min.js"></script>
+    <script type="text/javascript" src="js/adapter-7.4.0.min.js"></script>
+    <script type="text/javascript" src="js/srs.sdk.js"></script>
+    <script type="text/javascript" src="js/winlin.utility.js"></script>
+    <script type="text/javascript" src="js/srs.page.js"></script>
+    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
-<body onload="Alpine.start()">
-  <main x-data="webmic.root()" x-init="init" class="container">
-    <template x-if="!showHelp">
-      <div>
-        <div class="segmented-control">
-          <template x-for="m in modes">
-            <div>
-              <input x-model="mode" type="radio" :value="m" :id="m" x-on:change="tabChanged($event.target.value)" />
-              <label :for="m" :class="`tab-${m}`">
-                <p x-text="m"></p>
-              </label>
-            </div>
-          </template>
-          <div :class="`segmented-control__color selected-${mode}`"></div>
+<body>
+<section class="section">
+    <div class="container">
+        <div class="form-inline" style="display: none;">
+            <input type="text" id="txt_url">
+            <button class="button is-link" id="btn_play">Watch</button>
         </div>
-
-        <template x-if="mode == 'microphone'">
-          <div x-data="webmic.microphone()" class="microphone">
-            <div class="circle">
-              <input type="checkbox" x-on:change="applyStreamStatus($event.target.checked)" id="streaming" />
-              <label for="streaming">
-                <i class="material-icons">mic_none</i>
-              </label>
-              <span class="circle__back-1"></span>
-              <span class="circle__back-2"></span>
-            </div>
-            <div class="chip">
-              <div class="chip__icon">
-                <i class="material-icons" x-text="stateIcon"></i>
-              </div>
-              <template x-if="state == STATES.IDLE">
-                <p>Tap above to start streaming</p>
-              </template>
-              <template x-if="state == STATES.CONNECTING">
-                <p>Connecting...</p>
-              </template>
-              <template x-if="state == STATES.LOOKING_FOR_RECEIVERS">
-                <p>Looking for receivers...</p>
-              </template>
-              <template x-if="state == STATES.STREAMING">
-                <p>Streaming to <strong x-text="target"></strong></p>
-              </template>
-            </div>
-          </div>
-        </template>
-        <template x-if="mode == 'speaker'">
-          <div x-data="webmic.speaker()" class="speaker">
-            <div class="circle">
-              <input type="checkbox" x-on:change="applyListenStatus($event.target.checked)" id="listening" />
-              <label for="listening">
-                <i class="material-icons">volume_up</i>
-              </label>
-              <span class="circle__back-1"></span>
-              <span class="circle__back-2"></span>
-            </div>
-            <div class="chip">
-              <div class="chip__icon">
-                <i class="material-icons" x-text="stateIcon"></i>
-              </div>
-              <template x-if="state == STATES.IDLE">
-                <p>Tap above to start listening</p>
-              </template>
-              <template x-if="state == STATES.CONNECTING">
-                <p>Connecting...</p>
-              </template>
-              <template x-if="state == STATES.LOOKING_FOR_SENDERS">
-                <p>Looking for senders...</p>
-              </template>
-              <template x-if="state == STATES.LISTENING">
-                <p>Listening from <strong x-text="source"></strong></p>
-              </template>
-            </div>
-            <audio></audio>
-          </div>
-        </template>
-      </div>
-    </template>
-    <template x-if="showHelp">
-      <div class="help">
-        <p><strong>Web Microphone</strong> is a small application that works in a web browser (both mobile and desktop) and allows you to send audio from the microphone to another device.</p>
-        <h1>How to use it?</h1>
-        <p>
-          Once you open it on the device you want to use as a microphone, tap the big <strong>microphone</strong> button and the app will start looking for another app that is set to be "a speaker".<br />
-        </p>
-        <p>
-          Next, open the app on another device, select <strong>speaker</strong> and then click/tap the big <strong>speaker button</strong>. The two apps will try to find each other and once they do, the status below the button will confirm it's streaming.
-        </p>
-        <h1>Is it safe?</h1>
-        <p>Transmission from microphone to the speaker is encrypted and goes straight from device to device, without any servers in between, so there's no way to record it or listen in on the conversation.</p>
-        <p>That being said, currently the way the microphone finds the speaker and vice versa is quite simple and in case of many users at once, it could connect to the wrong microphone/speaker. This happens by design to make it simpler and not to require any codes, passwords etc. but might need to change in the future. For now it's recommended to make sure if you're connected to the mic/speaker that you wanted and if not, try connecting again.</p>
-      </div>
-    </template>
-
-    <div class="icon">
-      <a href="https://github.com/suda/wireless-microphone" target="_blank" rel="noopener" title="Source code on GitHub">
-        <div class="icon__github">
-          <i class="fab fa-github"></i>
-        </div>
-      </a>
-      <a href="https://twitter.com/suda" target="_blank" rel="noopener" title="Twitter">
-        <div class="icon__twitter">
-          <i class="fab fa-twitter"></i>
-        </div>
-      </a>
-      <a href="https://www.producthunt.com/@suda" target="_blank" rel="noopener" title="Product Hunt">
-        <div class="icon__ph">
-          <i class="fab fa-product-hunt"></i>
-        </div>
-      </a>
-      <a x-on:click="toggleHelp()">
-        <div :class="showHelp ? 'icon__help pressed' : 'icon__help'">
-          <i class="fas fa-question-circle"></i>
-        </div>
-      </a>
     </div>
-  </main>
+    <div class="columns is-centered">
+      <div class="column is-half">
+        <div class="box has-text-centered">
+          <video id="rtc_media_player" controls autoplay></video>
+        </div>
+      </div>
+    </div>
+</section>
+<section class="section" id="mic">
+        <div class="container has-text-centered">
+            <button id="pttBtn" class="button is-large is-primary is-rounded is-fullwidth">
+                <span class="icon is-large"><i class="fas fa-microphone fa-2x"></i></span>
+                <strong>HOLD TO TALK</strong>
+            </button>
+            <p id="status" class="help is-info mt-4">Ready</p>
+        </div>
+    </section>
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script>
+        const socket = io('https://100.88.122.128', {
+            transports: ['websocket'],
+            path: '/socket.io/'
+});
+        let pc;
+        let localStream;
+        const pttBtn = document.getElementById('pttBtn');
+        const status = document.getElementById('status');
+
+        async function startTalking() {
+            try {
+                status.innerText = "TRANSMITTING...";
+                pttBtn.classList.replace('is-primary', 'is-danger');
+
+                // 1. Get Audio
+                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                
+                // 2. Setup WebRTC
+                pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+
+                // Send ICE candidates to host
+                pc.onicecandidate = (e) => e.candidate && socket.emit('signal', { candidate: e.candidate });
+
+                // Add mic to connection
+                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+                // 3. Create Offer
+                const offer = await pc.createOffer();
+                await pc.setLocalDescription(offer);
+                socket.emit('signal', { offer });
+
+                // Handle Answer from Host
+                socket.once('signal', async (data) => {
+                    if (data.answer) await pc.setRemoteDescription(data.answer);
+                });
+
+            } catch (err) {
+                alert("Could not access microphone. Ensure you are using HTTPS.");
+            }
+        }
+
+        function stopTalking() {
+            status.innerText = "Ready";
+            pttBtn.classList.replace('is-danger', 'is-primary');
+
+            if (localStream) localStream.getTracks().forEach(track => track.stop());
+            if (pc) pc.close();
+        }
+
+        // Desktop & Mobile Listeners
+        pttBtn.addEventListener('mousedown', startTalking);
+        window.addEventListener('mouseup', stopTalking);
+        pttBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startTalking(); });
+        pttBtn.addEventListener('touchend', stopTalking);
+    </script>
+<script type="text/javascript">
+$(function(){
+    // Convert webrtc:// URL to WHEP URL
+    // webrtc://domain:port/app/stream => http://domain:1985/rtc/v1/whep/?app=app&stream=stream
+    var convertToWhepUrl = function(webrtcUrl) {
+        var a = document.createElement("a");
+        a.href = webrtcUrl.replace("webrtc://", "http://").replace("rtc://", "http://");
+
+        var schema = window.location.protocol;
+        var port = a.port || 1985;
+        if (schema === 'https:') {
+            port = a.port || 443;
+        }
+
+        var app = a.pathname.substring(1, a.pathname.lastIndexOf("/"));
+        var stream = a.pathname.slice(a.pathname.lastIndexOf("/") + 1);
+
+        var whepUrl = schema + '//' + a.hostname + ':' + port + '/rtc/v1/whep/?app=' + app + '&stream=' + stream;
+
+        // Append query parameters from original URL
+        if (a.search) {
+            whepUrl += '&' + a.search.substring(1);
+        }
+
+        return whepUrl;
+    };
+
+    var sdk = null; // Global handler to do cleanup when replaying.
+    const pc = new RTCPeerConnection({
+        iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+        ],
+    });
+    const btn = document.querySelector('.button');
+    var startPlay = function() {
+        $('#rtc_media_player').show();
+        $('#mic').show();
+        btn.classList.toggle('is-loading'); 
+
+        // Close PC when user replay.
+        if (sdk) {
+            sdk.close();
+        }
+        sdk = new SrsRtcWhipWhepAsync();
+
+        // https://webrtc.org/getting-started/remote-streams
+        $('#rtc_media_player').prop('srcObject', sdk.stream);
+        // Optional callback, SDK will add track to stream.
+        // sdk.ontrack = function (event) { console.log('Got track', event); sdk.stream.addTrack(event.track); };
+
+        // For example: webrtc://r.ossrs.net/live/livestream
+        // Convert to WHEP URL: http://localhost:1985/rtc/v1/whep/?app=live&stream=livestream
+        var url = $("#txt_url").val();
+        var whepUrl = convertToWhepUrl(url);
+        sdk.play(whepUrl).then(function(session){
+            $('#sessionid').html(session.sessionid);
+            $('#simulator-drop').attr('href', session.simulator + '?drop=1&username=' + session.sessionid);
+            btn.classList.toggle('is-loading'); 
+        }).catch(function (reason) {
+            sdk.close();
+            $('#rtc_media_player').hide();
+            console.error(reason);
+        });
+    };
+
+    $('#rtc_media_player').hide();
+    var query = parse_query_string();
+    srs_init_rtc("#txt_url", query);
+
+    $("#btn_play").click(function() {
+        $('#rtc_media_player').prop('muted', false);
+        startPlay();
+    });
+    
+    // Automatically start playing when the window finishes loading
+    window.addEventListener("load", function() {
+        $('#rtc_media_player').prop('muted', true);
+        startPlay();
+    });
+    
+});
+</script>
 </body>
 </html>
