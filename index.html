@@ -5,176 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Hello Bulma!</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.4/css/bulma.min.css">
-    <script type="text/javascript" src="js/jquery-1.12.2.min.js"></script>
-    <script type="text/javascript" src="js/adapter-7.4.0.min.js"></script>
-    <script type="text/javascript" src="js/srs.sdk.js"></script>
-    <script type="text/javascript" src="js/winlin.utility.js"></script>
-    <script type="text/javascript" src="js/srs.page.js"></script>
-    <script defer src="https://use.fontawesome.com/releases/v5.3.1/js/all.js"></script>
 </head>
 <body>
 <section class="section">
-    <div class="container">
-        <div class="form-inline" style="display: none;">
-            <input type="text" id="txt_url">
-            <button class="button is-link" id="btn_play">Watch</button>
-        </div>
-    </div>
     <div class="columns is-centered">
       <div class="column is-half">
         <div class="box has-text-centered">
-          <video id="rtc_media_player" controls autoplay></video>
+            <h1 class="title">Welcome!</h1>
+            <p class="subtitle">Please connect to the TailScale VPN, then click the button below to start watching.</p>
+            <a href="https://100.88.122.128/" class="button is-small is-primary is-rounded is-halfwidth">
+              <strong>I'm Connected</strong>
+            </a>
         </div>
       </div>
     </div>
 </section>
-<section class="section" id="mic">
-        <div class="container has-text-centered">
-            <button id="pttBtn" class="button is-small is-primary is-rounded is-halfwidth">
-                <span class="icon is-large"><i class="fas fa-microphone fa-2x"></i></span>
-                <strong>HOLD TO TALK</strong>
-            </button>
-            <p id="status" class="help is-info mt-4">Ready</p>
-        </div>
-    </section>
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
-    <script>
-        const socket = io('https://100.88.122.128', {
-            transports: ['websocket'],
-            path: '/socket.io/'
-});
-        let pc;
-        let localStream;
-        const pttBtn = document.getElementById('pttBtn');
-        const status = document.getElementById('status');
-
-        async function startTalking() {
-            try {
-                status.innerText = "TRANSMITTING...";
-                pttBtn.classList.replace('is-primary', 'is-danger');
-
-                // 1. Get Audio
-                localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                
-                // 2. Setup WebRTC
-                pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-
-                // Send ICE candidates to host
-                pc.onicecandidate = (e) => e.candidate && socket.emit('signal', { candidate: e.candidate });
-
-                // Add mic to connection
-                localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-                // 3. Create Offer
-                const offer = await pc.createOffer();
-                await pc.setLocalDescription(offer);
-                socket.emit('signal', { offer });
-
-                // Handle Answer from Host
-                socket.once('signal', async (data) => {
-                    if (data.answer) await pc.setRemoteDescription(data.answer);
-                });
-
-            } catch (err) {
-                alert("Could not access microphone. Ensure you are using HTTPS.");
-            }
-        }
-
-        function stopTalking() {
-            status.innerText = "Ready";
-            pttBtn.classList.replace('is-danger', 'is-primary');
-
-            if (localStream) localStream.getTracks().forEach(track => track.stop());
-            if (pc) pc.close();
-        }
-
-        // Desktop & Mobile Listeners
-        pttBtn.addEventListener('mousedown', startTalking);
-        window.addEventListener('mouseup', stopTalking);
-        pttBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startTalking(); });
-        pttBtn.addEventListener('touchend', stopTalking);
-    </script>
-<script type="text/javascript">
-$(function(){
-    // Convert webrtc:// URL to WHEP URL
-    // webrtc://domain:port/app/stream => http://domain:1985/rtc/v1/whep/?app=app&stream=stream
-    var convertToWhepUrl = function(webrtcUrl) {
-        var a = document.createElement("a");
-        a.href = webrtcUrl.replace("webrtc://", "http://").replace("rtc://", "http://");
-
-        var schema = window.location.protocol;
-        var port = a.port || 1985;
-        if (schema === 'https:') {
-            port = a.port || 443;
-        }
-
-        var app = a.pathname.substring(1, a.pathname.lastIndexOf("/"));
-        var stream = a.pathname.slice(a.pathname.lastIndexOf("/") + 1);
-
-        var whepUrl = schema + '//' + a.hostname + ':' + port + '/rtc/v1/whep/?app=' + app + '&stream=' + stream;
-
-        // Append query parameters from original URL
-        if (a.search) {
-            whepUrl += '&' + a.search.substring(1);
-        }
-
-        return whepUrl;
-    };
-
-    var sdk = null; // Global handler to do cleanup when replaying.
-    const pc = new RTCPeerConnection({
-        iceServers: [
-            { urls: "stun:stun.l.google.com:19302" },
-        ],
-    });
-    const btn = document.querySelector('.button');
-    var startPlay = function() {
-        $('#rtc_media_player').show();
-        $('#mic').show();
-        btn.classList.toggle('is-loading'); 
-
-        // Close PC when user replay.
-        if (sdk) {
-            sdk.close();
-        }
-        sdk = new SrsRtcWhipWhepAsync();
-
-        // https://webrtc.org/getting-started/remote-streams
-        $('#rtc_media_player').prop('srcObject', sdk.stream);
-        // Optional callback, SDK will add track to stream.
-        // sdk.ontrack = function (event) { console.log('Got track', event); sdk.stream.addTrack(event.track); };
-
-        // For example: webrtc://r.ossrs.net/live/livestream
-        // Convert to WHEP URL: http://localhost:1985/rtc/v1/whep/?app=live&stream=livestream
-        var url = $("#txt_url").val();
-        var whepUrl = convertToWhepUrl(url);
-        sdk.play(whepUrl).then(function(session){
-            $('#sessionid').html(session.sessionid);
-            $('#simulator-drop').attr('href', session.simulator + '?drop=1&username=' + session.sessionid);
-            btn.classList.toggle('is-loading'); 
-        }).catch(function (reason) {
-            sdk.close();
-            $('#rtc_media_player').hide();
-            console.error(reason);
-        });
-    };
-
-    $('#rtc_media_player').hide();
-    var query = parse_query_string();
-    srs_init_rtc("#txt_url", query);
-
-    $("#btn_play").click(function() {
-        $('#rtc_media_player').prop('muted', false);
-        startPlay();
-    });
-    
-    // Automatically start playing when the window finishes loading
-    window.addEventListener("load", function() {
-        $('#rtc_media_player').prop('muted', true);
-        startPlay();
-    });
-    
-});
-</script>
 </body>
 </html>
